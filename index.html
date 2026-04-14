@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HisabKitab — Majdoor Hisab Tracker</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f97316">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HisabKitab">
+<link rel="apple-touch-icon" href="./icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+
+<!-- SEO -->
+<meta name="description" content="Construction site majdoor ka hisab, haaziri aur payments track karein. Bilkul free aur offline!">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="install-banner">
+  <img src="./icon-192.png" alt="HisabKitab" width="40" height="40" style="border-radius:10px;">
+  <div style="flex:1;">
+    <div style="font-weight:700;font-size:14px;">HisabKitab Install Karein</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px;">Home screen par add karein — Offline!</div>
+  </div>
+  <button class="btn btn-primary btn-sm" id="install-btn" onclick="installApp()">Install</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;">&#x2715;</button>
+</div>
+
+<!-- APP LOCK SCREEN -->
+<div class="app-lock-screen hidden" id="app-lock-screen">
+  <div class="logo" style="flex-direction: column; gap: 16px; transform: scale(1.5); margin-bottom: 40px;">
+    <div class="logo-icon" style="background:none; box-shadow:none; width:60px; height:60px;">
+      <img src="./icon-192.png" alt="HisabKitab" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">
+    </div>
+    <div class="logo-text">Hisab<span>Kitab</span></div>
+  </div>
+  <div style="font-size:16px; font-weight:600; margin-bottom:24px; color:var(--text3)" id="lock-title">PIN Daalein</div>
+  
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div>
+    <div class="pin-dot"></div>
+    <div class="pin-dot"></div>
+    <div class="pin-dot"></div>
+  </div>
+
+  <div class="keypad">
+    <button class="key-btn" onclick="pressPIN(1)">1</button>
+    <button class="key-btn" onclick="pressPIN(2)">2</button>
+    <button class="key-btn" onclick="pressPIN(3)">3</button>
+    <button class="key-btn" onclick="pressPIN(4)">4</button>
+    <button class="key-btn" onclick="pressPIN(5)">5</button>
+    <button class="key-btn" onclick="pressPIN(6)">6</button>
+    <button class="key-btn" onclick="pressPIN(7)">7</button>
+    <button class="key-btn" onclick="pressPIN(8)">8</button>
+    <button class="key-btn" onclick="pressPIN(9)">9</button>
+    <button class="key-btn key-action" onclick="tryBiometric()" style="font-size:32px;">👆</button>
+    <button class="key-btn" onclick="pressPIN(0)">0</button>
+    <button class="key-btn key-action" onclick="clearPIN()" style="color:var(--red)">⌫</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon" style="background:none; box-shadow:none;">
+      <img src="./icon-192.png" alt="HisabKitab" style="width:100%; height:100%; object-fit:contain; border-radius:10px;">
+    </div>
+    <div class="logo-text">Hisab<span>Kitab</span></div>
+  </div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="header-date" id="headerDate"></div>
+    <button class="btn-icon" onclick="toggleTheme()" id="theme-btn" style="border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; padding:0; background:rgba(255,255,255,0.05); font-size:16px;">☀️</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('dashboard')">🏠 Dashboard</button>
+  <button class="nav-btn" onclick="showPage('workers')">👷 Majdoor</button>
+  <button class="nav-btn" onclick="showPage('attendance')">✅ Haaziri</button>
+  <button class="nav-btn" onclick="showPage('advance')">💸 Advance</button>
+  <button class="nav-btn" onclick="showPage('materials')">🧱 Saaman</button>
+  <button class="nav-btn" onclick="showPage('hisab')">📊 Hisab</button>
+  <button class="nav-btn" onclick="showPage('settings')">⚙️ Settings</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Kul Majdoor</div>
+        <div class="stat-val accent" id="stat-total">0</div>
+        <div class="stat-sub">Registered workers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aaj Haazir</div>
+        <div class="stat-val green" id="stat-present">0</div>
+        <div class="stat-sub">Aaj ka din</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Is Mahine Kharch</div>
+        <div class="stat-val accent" id="stat-monthly">₹0</div>
+        <div class="stat-sub" id="stat-month-label">Is mahine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Saaman Kharch</div>
+        <div class="stat-val green" id="stat-saaman">₹0</div>
+        <div class="stat-sub">Kul abhi tak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Kul Advance</div>
+        <div class="stat-val red" id="stat-advance">₹0</div>
+        <div class="stat-sub">Baaki wapas lena</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Aaj ki Haaziri</div>
+      <div id="dash-attendance-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Haaziri Summary — Aaj</div>
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:28px; font-weight:800; color:var(--green); text-shadow:0 0 10px var(--green-glow);" id="dash-present-count">0</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text3)">Haazir</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:28px; font-weight:800; color:var(--red); text-shadow:0 0 10px var(--red-glow);" id="dash-absent-count">0</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text3)">Gair</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:28px; font-weight:800; color:var(--yellow); text-shadow:0 0 10px rgba(234,179,8,0.15);" id="dash-half-count">0</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text3)">Aadha</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:28px; font-weight:800; color:var(--blue); text-shadow:0 0 10px rgba(59,130,246,0.15);" id="dash-ot-count">0</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text3)">OT</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKERS PAGE -->
+  <div class="page" id="page-workers">
+    <div class="section-header">
+      <div class="section-title">👷 Majdoor List</div>
+      <button class="btn btn-primary" onclick="openModal('add-worker')">+ Naya Majdoor</button>
+    </div>
+    <div class="worker-grid" id="worker-grid"></div>
+  </div>
+
+  <!-- ATTENDANCE PAGE -->
+  <div class="page" id="page-attendance">
+    <div class="date-row">
+      <!-- Custom Date Picker: att-date -->
+      <div class="custom-date-wrap" onclick="try { this.querySelector('input').showPicker(); } catch(e) {}">
+        <span class="cal-icon">📅</span>
+        <span class="cal-display" id="att-date-display">dd/mm/yyyy</span>
+        <input type="date" class="cal-native" id="att-date" onchange="syncDateDisplay('att-date'); renderAttendance();">
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="setToday()">Aaj</button>
+      <span id="att-day-total" style="font-size:14px; font-weight:600; color:var(--accent); margin-left:auto;"></span>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Haaziri Mark Karo</div>
+      <div id="attendance-list"></div>
+    </div>
+  </div>
+
+  <!-- ADVANCE PAGE -->
+  <div class="page" id="page-advance">
+    <div class="section-header">
+      <div class="section-title">💸 Advance Record</div>
+      <button class="btn btn-primary" onclick="openModal('add-advance')">+ Advance Do</button>
+    </div>
+    <div class="card">
+      <div id="advance-list"></div>
+    </div>
+  </div>
+
+  <!-- HISAB PAGE -->
+  <div class="page" id="page-hisab">
+    <div class="date-row" style="margin-bottom:20px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;">Shuru se</label>
+        <div class="custom-date-wrap" onclick="try { this.querySelector('input').showPicker(); } catch(e) {}">
+          <span class="cal-icon">📅</span>
+          <span class="cal-display" id="hisab-from-display">dd/mm/yyyy</span>
+          <input type="date" class="cal-native" id="hisab-from" onchange="syncDateDisplay('hisab-from'); renderHisab();">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;">Khatam tak</label>
+        <div class="custom-date-wrap" onclick="try { this.querySelector('input').showPicker(); } catch(e) {}">
+          <span class="cal-icon">📅</span>
+          <span class="cal-display" id="hisab-to-display">dd/mm/yyyy</span>
+          <input type="date" class="cal-native" id="hisab-to" onchange="syncDateDisplay('hisab-to'); renderHisab();">
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="setThisMonth()" style="align-self:flex-end;">Is Mahina</button>
+    </div>
+
+    <div id="hisab-summary-box"></div>
+
+    <div class="card">
+      <div class="card-title">📊 Worker-wise Hisab</div>
+      <div id="hisab-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- MATERIALS PAGE -->
+  <div class="page" id="page-materials">
+    <div class="section-header">
+      <div class="section-title">🧱 Makaan Ka Saaman</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="openModal('manage-materials')">⚙️ List</button>
+        <button class="btn btn-primary" onclick="openModal('add-purchase')">+ Naya Saaman</button>
+      </div>
+    </div>
+
+    <!-- Materials Overview -->
+    <div class="stats-grid" id="materials-stats"></div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">📝 Saaman Ki List</div>
+      <div id="materials-list"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE (NEW) -->
+  <div class="page" id="page-settings">
+    <div class="section-header">
+      <div class="section-title">⚙️ App Settings</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💾 Data Backup aur Restore</div>
+      <p style="font-size:13px; color:var(--text2); margin-bottom:20px;">Data aapke phone mein hi save hota hai. Agar app delete karenge toh data ud jayega. Isliye time-time par backup download karke rakhein!</p>
+      
+      <div class="settings-item">
+        <div style="display:flex; align-items:center;">
+          <div class="settings-icon">⬇️</div>
+          <div>
+            <div class="settings-text">Backup Download Karo</div>
+            <div class="settings-subtext">Saara data JSON file mein download karein</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="downloadBackup()">Download</button>
+      </div>
+      
+      <div class="settings-item">
+        <div style="display:flex; align-items:center;">
+          <div class="settings-icon">⬆️</div>
+          <div>
+            <div class="settings-text">Purana Backup Daalo (Restore)</div>
+            <div class="settings-subtext">Purani downloaded file yahaan select karein</div>
+          </div>
+        </div>
+        <label class="btn btn-outline" style="cursor:pointer;">
+          Upload File
+          <input type="file" style="display:none;" accept=".json" onchange="handleRestore(event)">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔒 App Security</div>
+      <p style="font-size:13px; color:var(--text2); margin-bottom:20px;">App ko lock karein taaki koi aur aapka data na dekh sake.</p>
+      
+      <div class="settings-item">
+        <div style="display:flex; align-items:center;">
+          <div class="settings-icon">🔑</div>
+          <div>
+            <div class="settings-text" id="sec-pin-text">4-Digit PIN Set Karein</div>
+            <div class="settings-subtext">App kholte hi PIN mangega</div>
+          </div>
+        </div>
+        <button class="btn btn-outline" id="sec-pin-btn" onclick="setupPIN()">Setup</button>
+      </div>
+
+      <div class="settings-item">
+        <div style="display:flex; align-items:center;">
+          <div class="settings-icon">👆</div>
+          <div>
+            <div class="settings-text">Fingerprint / FaceID</div>
+            <div class="settings-subtext">Biometric se jaldi unlock karein</div>
+          </div>
+        </div>
+        <button class="btn btn-outline" id="sec-bio-btn" onclick="toggleBiometric()">Enable</button>
+      </div>
+    </div>
+
+    <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+      <div class="card-title" style="color:var(--red);">⚠️ Danger Zone</div>
+      <div class="settings-item">
+        <div style="display:flex; align-items:center;">
+          <div class="settings-icon">🗑️</div>
+          <div>
+            <div class="settings-text">Saara Data Mitao</div>
+            <div class="settings-subtext">Isse sab kuch delete ho jayega hamesha ke liye</div>
+          </div>
+        </div>
+        <button class="btn btn-red" onclick="handleClearData()">Clear Data</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- MODALS -->
+
+<!-- Add Worker Modal -->
+<div class="modal-overlay" id="modal-add-worker">
+  <div class="modal">
+    <div class="modal-title">
+      👷 Naya Majdoor
+      <button class="modal-close" onclick="closeModal('add-worker')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Naam *</label>
+      <input type="text" class="form-input" id="w-name" placeholder="Jaise: Ramesh Kumar" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" class="form-input" id="w-phone" placeholder="WhatsApp number (10 digit)">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Kaam *</label>
+        <select class="form-input" id="w-skill" onchange="toggleOtherSkill('w')">
+          <option value="Mason">Raj Mistri (Mason)</option>
+          <option value="Helper">Helper (Labour)</option>
+          <option value="Lenter Thekedaar">Lenter ka Thekedaar</option>
+          <option value="Sariya Thekedaar">Sariya ka Thekedaar</option>
+          <option value="Makaan Thekedaar">Makaan ka Thekedaar</option>
+          <option value="Centering Thekedaar">Centering (Setrin) ka Thekedaar</option>
+          <option value="Carpenter">Carpenter</option>
+          <option value="Painter">Painter</option>
+          <option value="Electrician">Electrician</option>
+          <option value="Plumber">Plumber</option>
+          <option value="Welder">Welder</option>
+          <option value="Driver">Driver</option>
+          <option value="Guard">Guard</option>
+          <option value="Khet Majdoor">Khet Majdoor</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" class="form-input" id="w-skill-other" placeholder="Kaam ka naam likhein" style="display:none; margin-top:8px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Daily Rate (₹) *</label>
+        <input type="number" class="form-input" id="w-rate" placeholder="500">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Overtime Rate (₹/ghanta)</label>
+      <input type="number" class="form-input" id="w-ot-rate" placeholder="100">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="addWorker()">✓ Save Karo</button>
+      <button class="btn btn-outline" onclick="closeModal('add-worker')">Ruk Jao</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Worker Modal -->
+<div class="modal-overlay" id="modal-edit-worker">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ Majdoor Detail
+      <button class="modal-close" onclick="closeModal('edit-worker')">✕</button>
+    </div>
+    <input type="hidden" id="ew-id">
+    <div class="form-group">
+      <label class="form-label">Naam *</label>
+      <input type="text" class="form-input" id="ew-name" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" class="form-input" id="ew-phone">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Kaam *</label>
+        <select class="form-input" id="ew-skill" onchange="toggleOtherSkill('ew')">
+          <option value="Mason">Raj Mistri (Mason)</option>
+          <option value="Helper">Helper (Labour)</option>
+          <option value="Lenter Thekedaar">Lenter ka Thekedaar</option>
+          <option value="Sariya Thekedaar">Sariya ka Thekedaar</option>
+          <option value="Makaan Thekedaar">Makaan ka Thekedaar</option>
+          <option value="Centering Thekedaar">Centering (Setrin) ka Thekedaar</option>
+          <option value="Carpenter">Carpenter</option>
+          <option value="Painter">Painter</option>
+          <option value="Electrician">Electrician</option>
+          <option value="Plumber">Plumber</option>
+          <option value="Welder">Welder</option>
+          <option value="Driver">Driver</option>
+          <option value="Guard">Guard</option>
+          <option value="Khet Majdoor">Khet Majdoor</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" class="form-input" id="ew-skill-other" placeholder="Kaam ka naam likhein" style="display:none; margin-top:8px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Daily Rate (₹) *</label>
+        <input type="number" class="form-input" id="ew-rate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Overtime Rate (₹/ghanta)</label>
+      <input type="number" class="form-input" id="ew-ot-rate">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="saveEditWorker()">✓ Update Karo</button>
+      <button class="btn btn-red" onclick="deleteWorker()">🗑 Hatao</button>
+    </div>
+    <div id="delete-confirm-box" style="display:none; margin-top:20px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:16px;">
+      <div style="font-size:14px; font-weight:700; color:#ef4444; margin-bottom:8px;">⚠️ Pakka hatana chahte ho?</div>
+      <div style="font-size:13px; color:var(--text); margin-bottom:16px;"><span id="delete-confirm-name" style="font-weight:800; color:#fff;"></span> ka sara data hata jaayega — haaziri, advance sab. Yeh wapas nahi aayega!</div>
+      <div style="display:flex; gap:12px;">
+        <button class="btn btn-red" style="flex:1; justify-content:center;" onclick="confirmDeleteWorker()">Haan, Hata Do</button>
+        <button class="btn btn-outline" style="flex:1; justify-content:center;" onclick="cancelDeleteWorker()">Nahi, Ruko</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Advance Modal -->
+<div class="modal-overlay" id="modal-add-advance">
+  <div class="modal">
+    <div class="modal-title">
+      💸 Advance Do
+      <button class="modal-close" onclick="closeModal('add-advance')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Majdoor *</label>
+      <select class="form-input" id="adv-worker"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Rakam (₹) *</label>
+        <input type="number" class="form-input" id="adv-amount" placeholder="500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tarikh *</label>
+        <div class="custom-date-wrap" style="width: 100%; box-sizing: border-box; justify-content: flex-start; padding: 12px 16px;" onclick="try { this.querySelector('input').showPicker(); } catch(e) {}">
+          <span class="cal-icon">📅</span>
+          <span class="cal-display" id="adv-date-display">dd/mm/yyyy</span>
+          <input type="date" class="cal-native" id="adv-date" onchange="syncDateDisplay('adv-date')">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note (Optional)</label>
+      <input type="text" class="form-input" id="adv-note" placeholder="Jiase: Dawai ke liye" autocomplete="off">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="addAdvance()">✓ Save Karo</button>
+      <button class="btn btn-outline" onclick="closeModal('add-advance')">Ruk Jao</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hisab Detail Modal -->
+<div class="modal-overlay" id="modal-hisab-detail">
+  <div class="modal print-area">
+    <div class="modal-title">
+      📊 Pura Hisab
+      <button class="modal-close" onclick="closeModal('hisab-detail')">✕</button>
+    </div>
+    <div id="hisab-detail-content"></div>
+  </div>
+</div>
+
+<!-- Add Material Purchase Modal -->
+<div class="modal-overlay" id="modal-add-purchase">
+  <div class="modal">
+    <div class="modal-title">
+      🧱 Saaman Khareeda
+      <button class="modal-close" onclick="closeModal('add-purchase')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Saaman *</label>
+      <select class="form-input" id="mat-select" onchange="updateMatRate()"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="number" step="0.01" class="form-input" id="mat-qty" placeholder="Jaise: 50" oninput="calcMatTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rate (₹) *</label>
+        <input type="number" class="form-input" id="mat-rate" placeholder="350" oninput="calcMatTotal()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tarikh *</label>
+      <div class="custom-date-wrap" style="width: 100%; box-sizing: border-box; justify-content: flex-start; padding: 12px 16px;" onclick="try { this.querySelector('input').showPicker(); } catch(e) {}">
+        <span class="cal-icon">📅</span>
+        <span class="cal-display" id="mat-date-display">dd/mm/yyyy</span>
+        <input type="date" class="cal-native" id="mat-date" onchange="syncDateDisplay('mat-date')">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total Amount (₹)</label>
+      <input type="number" class="form-input" id="mat-total" readonly style="background:var(--surface2);font-weight:bold;color:var(--text);">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note / Dukaan / Gaadi Number (Optional)</label>
+      <input type="text" class="form-input" id="mat-note" placeholder="Dukaan ka naam" autocomplete="off">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="addPurchase()">✓ Save Karo</button>
+      <button class="btn btn-outline" onclick="closeModal('add-purchase')">Ruk Jao</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Materials Modal -->
+<div class="modal-overlay" id="modal-manage-materials">
+  <div class="modal">
+    <div class="modal-title">
+      ⚙️ Saaman Rate Update
+      <button class="modal-close" onclick="closeModal('manage-materials')">✕</button>
+    </div>
+    <div id="manage-mat-list" style="margin-bottom:20px; max-height:300px; overflow-y:auto; padding-right:8px;"></div>
+    <div style="padding-top:10px; border-top:1px solid var(--border);">
+      <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text2);">Naya Item Banao</div>
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" class="form-input" id="new-mat-name" placeholder="Naam (Mitti)">
+        </div>
+        <div class="form-group">
+          <input type="text" class="form-input" id="new-mat-unit" placeholder="Unit (Trolley)">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="number" class="form-input" id="new-mat-rate" placeholder="Rate (₹)">
+        <button class="btn btn-secondary" onclick="addNewMaterial()">+ Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SMART SCROLL FAB -->
+<button class="smart-scroll-fab" id="smart-scroll-fab" onclick="handleSmartScroll()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14M19 12l-7 7-7-7"/>
+  </svg>
+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Message here</div>
+
+<script src="js/store.js" charset="utf-8"></script>
+<script src="js/app.js" charset="utf-8"></script>
+</body>
+</html>
